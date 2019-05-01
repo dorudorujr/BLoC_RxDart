@@ -12,6 +12,7 @@ void main() => runApp(new MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    //mainWidgetはWordProviderを親とする
     return WordProvider(
       child: MaterialApp(
         title: 'Startup Name Generator',
@@ -98,13 +99,14 @@ class WordList extends StatelessWidget {
                 return item.name;
               }
           );
-          final alreadyAdded = addedWord.toString().contains(pair.asPascalCase);    //pairと同一の文字列があるかどうか
+          final alreadyAdded = addedWord.toString().contains(pair.asPascalCase);    //pairと同一の文字列があるかどうか(返り値はbool)
           return _createWordListTile(word, alreadyAdded, pair.asPascalCase);
         }
       },
     );
   }
 
+  //お気に入りされている単語かどうかを判定して一行を作る
   ListTile _createWordListTile(WordBloc word, bool isFavorited, String title) {
     return new ListTile(
       title: new Text(title),

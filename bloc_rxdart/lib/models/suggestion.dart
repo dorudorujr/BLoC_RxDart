@@ -14,6 +14,9 @@ class Suggestion {
 
   int get suggestionCount => _suggestedWords.length;
 
+  // 変更不可なリスト
+  //値はここでしか変えられないということ
+  //suggestedWordsがなくても機能面ではかわりない
   UnmodifiableListView<WordPair> get suggestedWords => UnmodifiableListView(_suggestedWords);
 
   void add(WordPair wordPair) {
