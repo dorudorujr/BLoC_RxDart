@@ -1,112 +1,125 @@
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:english_words/english_words.dart';
+import 'package:bloc_rxdart/BlocFavoritePage.dart';
+import 'package:bloc_rxdart/models/word_item.dart';
+import 'package:bloc_rxdart/word_bloc.dart';
+import 'package:bloc_rxdart/WordProvider.dart';
+import 'package:bloc_rxdart/models/suggestion.dart';
+import 'package:bloc_rxdart/widgets/CountLabel.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+    return WordProvider(
+      child: MaterialApp(
+        title: 'Startup Name Generator',
+        theme: new ThemeData(primaryColor: Colors.white), //
+        // テーマカラ-
+        home: RandomWordsHomePage(),
+        //画面遷移を指定
+        routes: <String, WidgetBuilder> {
+          BlocFavoritePage.routeName: (context) => BlocFavoritePage()
+        },
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
+class RandomWordsHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final wordBloc = WordProvider.of(context);
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+        title: Text("Startup Name Generator"),
+        actions: <Widget>[
+          StreamBuilder<int>(
+            stream: wordBloc.itemCount,
+            initialData: 0, //初期値
+            //無名関数
+            builder: (context, snapshot) => CountLabel(
+              favoriteCount: snapshot.data,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+          ),
+          new IconButton(
+              icon:const Icon(Icons.list),
+              onPressed: (){
+                Navigator.of(context).pushNamed(BlocFavoritePage.routeName);
+              }
+          )
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: WordList(),
     );
   }
+}
+
+class WordList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+
+      //ListViewの各行をWidgetとして作る匿名関数を設定します
+      //偶数行なら、この関数は ListTile を生成し、
+      //奇数業なら、この関数は Divider widget (区切り線)を生成します
+      itemBuilder: (context, i) {
+        //偶数行ならば、区切り線を作成(Dividerで)
+        if (i.isOdd) return new Divider();
+
+        // "i ~/ 2" という文法は、 i を 2で割って整数を返します
+        //これは ListView 内の実際の単語数を計算します。つまり区切り線の数を引きます
+        final index = i ~/ 2;
+        ////リストのインデックスがsuggestionsの要素数以上になったら単語を追加
+        if (index >= suggestion.suggestionCount) {
+          const addNum = 10;
+          //生成した単語を追加している
+          suggestion.addMulti(generateWordPairs().take(addNum).toList());
+        }
+        //精製した文字列を返却
+        return _buildRow(WordProvider.of(context), suggestion.suggestedWords[index]);
+      },
+    );
+  }
+
+  //Listの一行の設定
+  Widget _buildRow(WordBloc word, WordPair pair) {
+    return new StreamBuilder<List<WordItem>>(
+      stream: word.items, //いいねされた単語のリスト
+      //いいねされた単語の名前をすべて取り出している
+      builder: (_, snapshot) {
+        if (snapshot.data == null || snapshot.data.isEmpty) {
+          return _createWordListTile(word, false, pair.asPascalCase);
+        } else {
+          final addedWord = snapshot.data.map(
+              (item) {
+                return item.name;
+              }
+          );
+          final alreadyAdded = addedWord.toString().contains(pair.asPascalCase);    //pairと同一の文字列があるかどうか
+          return _createWordListTile(word, alreadyAdded, pair.asPascalCase);
+        }
+      },
+    );
+  }
+
+  ListTile _createWordListTile(WordBloc word, bool isFavorited, String title) {
+    return new ListTile(
+      title: new Text(title),
+      trailing: new Icon(
+        isFavorited ? Icons.favorite : Icons.favorite_border,
+        color: isFavorited ? Colors.red : null,
+      ),
+      onTap: () {
+        if (isFavorited) {
+          word.wordRemoval.add(WordRemoval(title));
+        } else {
+          word.wordAddition.add(WordAddition(title));
+        }
+      },
+    );
+  }
+
 }
