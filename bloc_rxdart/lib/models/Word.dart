@@ -8,10 +8,11 @@ class Word {
 
   Word();
 
+  //なくても動作は正常にする
   //特定要素の複製?
-  Word.clone(Word word) {
+  /*Word.clone(Word word) {
     _items.addAll(word._items);
-  }
+  }*/
 
   int get itemCount => _items.length;   //get(getter)
 

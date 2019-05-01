@@ -8,9 +8,10 @@ class Suggestion {
 
   Suggestion();
 
-  Suggestion.clone(Suggestion suggestion) {
+  //なくても動作は正常にする
+  /*Suggestion.clone(Suggestion suggestion) {
     _suggestedWords.addAll(suggestion._suggestedWords);
-  }
+  }*/
 
   int get suggestionCount => _suggestedWords.length;
 
